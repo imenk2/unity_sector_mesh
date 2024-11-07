@@ -88,7 +88,7 @@ public class SectorManager : MonoBehaviour
     private static int m_CacheCount = 0;
     void Start()
     {
-        Init();
+        //Init();
     }
 
     // Update is called once per frame
@@ -100,7 +100,9 @@ public class SectorManager : MonoBehaviour
             if(DisPoseGameObject())
                 RedistributeSectors();
         }
-        ChangeSectores();
+
+        ChangeSectores(m_SectorDatas.Count > 2);
+       
     }
 
     private void OnValidate()
@@ -108,16 +110,10 @@ public class SectorManager : MonoBehaviour
          
     }
 
+    [ContextMenu("初始化4个")]
     void Init()
     {
-        _sector = Sector.Instance;
-        var shader = Shader.Find("Unlit");
-        if (!shader) return;
-        
-        if (!m_SectorMat)
-        {
-            m_SectorMat = CoreUtils.CreateEngineMaterial(shader);
-        }
+        SectorInstanceAll();
         m_SectorDatas.Clear();
         m_CacheGameobject.Clear();
         for (int i = 0; i < 4; i++)
@@ -151,6 +147,7 @@ public class SectorManager : MonoBehaviour
     [ContextMenu("创建")]
     public void CreateSector()
     {
+        SectorInstanceAll();
         var sectorObj = new GameObject("sector " + (m_SectorDatas.Count));
         sectorObj.transform.parent = this.transform;
         sectorObj.transform.localPosition = Vector3.zero;
@@ -174,39 +171,79 @@ public class SectorManager : MonoBehaviour
         RedistributeSectors();
     }
 
-
-    public void ChangeSectores()
+    void SectorInstanceAll()
     {
-        for (int i = 1; i < m_SectorDatas.Count - 1; i++)
+        _sector = Sector.Instance;
+        var shader = Shader.Find("Unlit");
+        if (!shader) return;
+        
+        if (!m_SectorMat)
         {
-            if (m_SectorDatas[i].NeedUpdate)
+            m_SectorMat = CoreUtils.CreateEngineMaterial(shader);
+        }
+    }
+    public void ChangeSectores(bool three)
+    {
+        if (three)
+        {
+            for (int i = 1; i < m_SectorDatas.Count - 1; i++)
             {
-                m_SectorDatas[i - 1].enddgree = m_SectorDatas[i].startdgree;
-                m_SectorDatas[i + 1].startdgree = m_SectorDatas[i].enddgree;
-                _sector.UpdateMesh(m_SectorDatas[i - 1]);
-                _sector.UpdateMesh(m_SectorDatas[i + 1]);
-                _sector.UpdateMesh(m_SectorDatas[i]);
+                if (m_SectorDatas[i].NeedUpdate)
+                {
+                    m_SectorDatas[i - 1].enddgree = m_SectorDatas[i].startdgree;
+                    m_SectorDatas[i + 1].startdgree = m_SectorDatas[i].enddgree;
+                    _sector.UpdateMesh(m_SectorDatas[i - 1]);
+                    _sector.UpdateMesh(m_SectorDatas[i + 1]);
+                    _sector.UpdateMesh(m_SectorDatas[i]);
+                }
+            }
+
+            //第一个扇形
+            if (m_SectorDatas[0].NeedUpdate)
+            {
+                m_SectorDatas[1].startdgree = m_SectorDatas[0].enddgree;//下一个
+                _sector.UpdateMesh(m_SectorDatas[1]);
+                m_SectorDatas[m_SectorDatas.Count - 1].enddgree = m_SectorDatas[0].startdgree + 360;//上一个, 回到末尾
+                _sector.UpdateMesh(m_SectorDatas[m_SectorDatas.Count - 1]);
+                _sector.UpdateMesh(m_SectorDatas[0]);
+            }
+            //最后一个扇形
+            if (m_SectorDatas[m_SectorDatas.Count - 1].NeedUpdate)
+            {
+                m_SectorDatas[0].startdgree = m_SectorDatas[m_SectorDatas.Count - 1].enddgree - 360;//下一个，回到起点
+                _sector.UpdateMesh(m_SectorDatas[m_SectorDatas.Count - 1]);
+                m_SectorDatas[m_SectorDatas.Count - 2].enddgree = m_SectorDatas[m_SectorDatas.Count - 1].startdgree;//上一个
+                _sector.UpdateMesh(m_SectorDatas[m_SectorDatas.Count - 2]);
+                _sector.UpdateMesh(m_SectorDatas[0]);
             }
         }
-     
-        //第一个扇形
-        if (m_SectorDatas[0].NeedUpdate)
+        else
         {
-            m_SectorDatas[1].startdgree = m_SectorDatas[0].enddgree;//下一个
-            _sector.UpdateMesh(m_SectorDatas[1]);
-            m_SectorDatas[m_SectorDatas.Count - 1].enddgree = m_SectorDatas[0].startdgree + 360;//上一个, 回到末尾
-            _sector.UpdateMesh(m_SectorDatas[m_SectorDatas.Count - 1]);
-            _sector.UpdateMesh(m_SectorDatas[0]);
+            //2
+            if (m_SectorDatas.Count > 1)
+            {
+                if (m_SectorDatas[0].NeedUpdate)
+                {
+                    m_SectorDatas[1].startdgree = m_SectorDatas[0].enddgree;//下一个
+                    m_SectorDatas[1].enddgree = m_SectorDatas[0].startdgree + 360;
+                    _sector.UpdateMesh(m_SectorDatas[1]);
+                    _sector.UpdateMesh(m_SectorDatas[0]);
+                }else if (m_SectorDatas[1].NeedUpdate)
+                {
+                    m_SectorDatas[0].startdgree = m_SectorDatas[1].enddgree - 360;//
+                    m_SectorDatas[0].enddgree = m_SectorDatas[1].startdgree;//
+                    _sector.UpdateMesh(m_SectorDatas[0]);
+                    _sector.UpdateMesh(m_SectorDatas[1]);
+                }
+            }
+            //1
+            else if(m_SectorDatas.Count == 1 && m_SectorDatas[0].NeedUpdate)
+            {
+                _sector.UpdateMesh(m_SectorDatas[0]);
+            }
+             
         }
-        //最后一个扇形
-        if (m_SectorDatas[m_SectorDatas.Count - 1].NeedUpdate)
-        {
-            m_SectorDatas[0].startdgree = m_SectorDatas[m_SectorDatas.Count - 1].enddgree - 360;//下一个，回到起点
-            _sector.UpdateMesh(m_SectorDatas[0]);
-            m_SectorDatas[m_SectorDatas.Count - 2].enddgree = m_SectorDatas[m_SectorDatas.Count - 1].startdgree;//上一个
-            _sector.UpdateMesh(m_SectorDatas[m_SectorDatas.Count - 2]);
-            _sector.UpdateMesh(m_SectorDatas[m_SectorDatas.Count - 1]);
-        }
+       
     }
     public void RedistributeSectors()
     {
@@ -224,14 +261,16 @@ public class SectorManager : MonoBehaviour
 
     bool DisPoseGameObject()
     {
-        var selectGos = m_SectorDatas.Select(d => d.go);
-        var delete = m_CacheGameobject.Find(go => !selectGos.Contains(go));
-        if (delete)
+        if (m_SectorDatas.Count > 0)
         {
-            DestroyImmediate(delete);
-            return true;
+            var selectGos = m_SectorDatas.Select(d => d.go);
+            var delete = m_CacheGameobject.Find(go => !selectGos.Contains(go));
+            if (delete)
+            {
+                DestroyImmediate(delete);
+                return true;
+            }
         }
-
         return false;
     }
 
