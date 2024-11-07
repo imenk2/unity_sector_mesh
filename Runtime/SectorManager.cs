@@ -268,6 +268,13 @@ public class SectorManager : MonoBehaviour
             if (delete)
             {
                 DestroyImmediate(delete);
+                for (int i = 0; i < m_CacheGameobject.Count; i++)
+                {
+                    if (!m_CacheGameobject[i])
+                    {
+                        m_CacheGameobject.RemoveAt(i);
+                    }
+                }
                 return true;
             }
         }
