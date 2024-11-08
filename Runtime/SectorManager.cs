@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -21,7 +20,9 @@ public class SectorManager : MonoBehaviour
         public float radius = 1.0f;
         public float innerradius = 0;
         public float startdgree = 0;
-        public float enddgree = 30;    
+        public float enddgree = 30;
+        public Texture2D texture2D;
+        public bool uvdir = false;
         
         private VertexDirection c_dir = VertexDirection.Z;
         private Color c_color = Color.white;
@@ -29,9 +30,11 @@ public class SectorManager : MonoBehaviour
         private float c_innerradius = 0;
         private float c_startdgree = 0;
         private float c_enddgree = 30;
+        private Texture2D c_texture2D;
+        private bool c_uvdir = false;
         
         public Material mat;
-        public Mesh mesh;
+        public UnityEngine.Mesh mesh;
         public GameObject go;
 
         public bool NeedUpdate
@@ -44,7 +47,9 @@ public class SectorManager : MonoBehaviour
                 var d = CompareFloats(c_enddgree, enddgree);
                 var e = c_color != color;
                 var f = c_dir != dir;
-                var need =  a || b || c || d || e || f;
+                var g = c_texture2D != texture2D;
+                var h = c_uvdir != uvdir;
+                var need =  a || b || c || d || e || f || g || h;
                 if (need)
                 {
                     c_radius = radius;
@@ -53,6 +58,8 @@ public class SectorManager : MonoBehaviour
                     c_enddgree = enddgree;
                     c_color = color;
                     c_dir = dir;
+                    c_texture2D = texture2D;
+                    c_uvdir = uvdir;
                 }
 
                 return need;
@@ -63,7 +70,7 @@ public class SectorManager : MonoBehaviour
         {
             
         }
-        public SectorData(Color color, float radius, float innerradius, float startdgree, float enddgree, Material mat, Renderer renderer, Mesh mesh)
+        public SectorData(Color color, float radius, float innerradius, float startdgree, float enddgree, Material mat, Renderer renderer, UnityEngine.Mesh mesh)
         {
             this.color = color;
             this.radius = radius;
@@ -86,9 +93,9 @@ public class SectorManager : MonoBehaviour
     private static Sector _sector;
     private static Material m_SectorMat;
     private static int m_CacheCount = 0;
-    void Start()
+    void OnEnable()
     {
-        //Init();
+        SectorInstanceAll();
     }
 
     // Update is called once per frame
@@ -174,11 +181,11 @@ public class SectorManager : MonoBehaviour
     void SectorInstanceAll()
     {
         _sector = Sector.Instance;
-        var shader = Shader.Find("Unlit");
-        if (!shader) return;
-        
+     
         if (!m_SectorMat)
         {
+            var shader = Shader.Find("Unlit");
+            if (!shader) return;
             m_SectorMat = CoreUtils.CreateEngineMaterial(shader);
         }
     }
