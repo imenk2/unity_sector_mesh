@@ -113,7 +113,7 @@ public class Sector
             float rad = CalculateRotation(startdgree, enddgree);
             float offset = 0.5f;
             Vector2 displacement = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-            var offcenter = displacement.normalized * sd.radius / 2f;
+            var offcenter = displacement.normalized / 2f;
             if (sd.dir == SectorManager.SectorData.VertexDirection.Y)
             {
                 uv[i] = new Vector2(vertices[i].x / sd.radius + 0.5f, vertices[i].z / sd.radius + 0.5f);
